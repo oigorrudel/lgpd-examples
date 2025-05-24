@@ -18,6 +18,8 @@
 
     <modules>
         <module>jpa-example</module>
+<!--        <module>mongodb-example</module>-->
+        <module>rabbitmq-example</module>
     </modules>
 
     <properties>
