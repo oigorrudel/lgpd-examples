@@ -43,7 +43,9 @@ public class RabbitMQConfigs {
     RabbitListenerConfigurer rabbitListenerConfigurer(final ObjectMapper objectMapper,
                                                       final SimpleRabbitListenerContainerFactory factory) {
         return rabbitListenerEndpointRegistrar -> {
-            factory.setMessageConverter(new CustomJackson2JsonMessageConverter(objectMapper, rsaService));
+            factory.setMessageConverter(
+                rsaEnabled ? new CustomJackson2JsonMessageConverter(objectMapper, rsaService) : new Jackson2JsonMessageConverter(objectMapper)
+            );
 
             rabbitListenerEndpointRegistrar.setContainerFactory(factory);
         };
