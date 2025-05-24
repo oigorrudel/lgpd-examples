@@ -17,6 +17,7 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>log-example</module>
         <module>jpa-example</module>
 <!--        <module>mongodb-example</module>-->
         <module>rabbitmq-example</module>
