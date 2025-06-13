@@ -1,5 +1,7 @@
 package br.xksoberbado.rabbitmqexample.config;
 
+import br.xksoberbado.rabbitmqexample.service.AESService;
+import br.xksoberbado.rabbitmqexample.service.IKeyService;
 import br.xksoberbado.rabbitmqexample.service.RSAService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -25,9 +27,13 @@ public class RabbitMQConfigs {
     private static final String DLQ = QUEUE_NAME + ".dlq";
 
     private final RSAService rsaService;
+    private final AESService aesService;
 
     @Value("${application.rsa-enabled}")
     private boolean rsaEnabled;
+
+    @Value("${application.aes-enabled}")
+    private boolean aesEnabled;
 
     @Bean
     RabbitTemplateCustomizer rabbitTemplateCustomizer(final ObjectMapper objectMapper) {
@@ -35,6 +41,8 @@ public class RabbitMQConfigs {
             rabbitTemplate.setMessageConverter(new Jackson2JsonMessageConverter(objectMapper));
             if (rsaEnabled) {
                 rabbitTemplate.setBeforePublishPostProcessors(rsaEncryptProcessor());
+            } else if (aesEnabled) {
+                rabbitTemplate.setBeforePublishPostProcessors(aesEncryptProcessor());
             }
         };
     }
@@ -44,7 +52,9 @@ public class RabbitMQConfigs {
                                                       final SimpleRabbitListenerContainerFactory factory) {
         return rabbitListenerEndpointRegistrar -> {
             factory.setMessageConverter(
-                rsaEnabled ? new CustomJackson2JsonMessageConverter(objectMapper, rsaService) : new Jackson2JsonMessageConverter(objectMapper)
+                rsaEnabled || aesEnabled
+                    ? new CustomJackson2JsonMessageConverter(objectMapper, rsaEnabled ? rsaService : aesService)
+                    : new Jackson2JsonMessageConverter(objectMapper)
             );
 
             rabbitListenerEndpointRegistrar.setContainerFactory(factory);
@@ -53,6 +63,10 @@ public class RabbitMQConfigs {
 
     private MessagePostProcessor rsaEncryptProcessor() {
         return message -> new Message(rsaService.encrypt(message.getBody()), message.getMessageProperties());
+    }
+
+    private MessagePostProcessor aesEncryptProcessor() {
+        return message -> new Message(aesService.encrypt(message.getBody()), message.getMessageProperties());
     }
 
     @Bean
@@ -81,12 +95,12 @@ public class RabbitMQConfigs {
     @RequiredArgsConstructor
     private static class CustomJackson2JsonMessageConverter extends Jackson2JsonMessageConverter {
 
-        private final RSAService rsaService;
+        private final IKeyService keyService;
 
         public CustomJackson2JsonMessageConverter(final ObjectMapper jsonObjectMapper,
-                                                  final RSAService rsaService) {
+                                                  final IKeyService keyService) {
             super(jsonObjectMapper);
-            this.rsaService = rsaService;
+            this.keyService = keyService;
         }
 
         @Override
@@ -94,7 +108,7 @@ public class RabbitMQConfigs {
             final var messageProperties = message.getMessageProperties();
             messageProperties.setContentType(MessageProperties.CONTENT_TYPE_JSON);
 
-            return super.fromMessage(new Message(rsaService.decrypt(message.getBody()), messageProperties));
+            return super.fromMessage(new Message(keyService.decrypt(message.getBody()), messageProperties));
         }
     }
 }
