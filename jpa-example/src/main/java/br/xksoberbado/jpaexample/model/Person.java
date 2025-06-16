@@ -23,10 +23,10 @@ public class Person {
 
     private String name;
 
-    @Column(columnDefinition = "BINARY(16)")
+    @Column(columnDefinition = "TINYBLOB")
     @ColumnTransformer(
-        read = "CAST(DECRYPT('AES', 'myKey', cpf) AS VARCHAR)",
-        write = "ENCRYPT('AES', 'myKey', ?)"
+        read = "AES_DECRYPT(cpf, '+vgfv+vCWXEkyFNVHGF/05Hxz1KPp+ARHhFKYh5rUmM=')",
+        write = "AES_ENCRYPT(?, '+vgfv+vCWXEkyFNVHGF/05Hxz1KPp+ARHhFKYh5rUmM=')"
     )
     private String cpf;
 }

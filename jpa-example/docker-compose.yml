@@ -1,0 +1,23 @@
+services:
+    mysql:
+        image: 'mysql:latest'
+        environment:
+            - 'MYSQL_DATABASE=jpa-example'
+            - 'MYSQL_PASSWORD=passwd'
+            - 'MYSQL_ROOT_PASSWORD=passwd'
+            - 'MYSQL_USER=username'
+        ports:
+            - '3306:3306'
+        expose:
+            - 3306
+        networks:
+            - docker-network
+        volumes:
+            - mysql:/var/lib/mysql
+
+networks:
+    docker-network:
+        driver: bridge
+
+volumes:
+    mysql:
