@@ -24,8 +24,6 @@ public class JpaExampleApplication {
     @Bean
     ApplicationRunner applicationRunner() {
         return args -> {
-            repository.deleteAll();
-
             repository.saveAll(
                 List.of(
                     Person.builder().id(UUID.randomUUID()).name("João").cpf("11122233300").build(),
